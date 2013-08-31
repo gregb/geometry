@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	POINT_AS_ARRAY  string  = "[%f,%f]"
-	POINT_AS_OBJECT string  = "{\"x\":%f,\"y\":%f}"
-	CIRCLE_AS_ARRAY string  = "[%f,%f,%f]"
+	POINT_AS_ARRAY   string = "[%f,%f]"
+	POINT_AS_OBJECT  string = "{\"x\":%f,\"y\":%f}"
+	CIRCLE_AS_ARRAY  string = "[%f,%f,%f]"
 	CIRCLE_AS_OBJECT string = "{\"c\":{\"x\":%f,\"y\":%f},\"r\":%f}"
 )
 

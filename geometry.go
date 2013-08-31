@@ -7,13 +7,26 @@ import (
 type Shape interface {
 	Contains(Point) bool
 	Area() float64
+	Perimeter() float64
+}
+
+func init() {
+
+	// required that some structs are Shapes
+	var c Circle
+	var b Box
+
+	_ = Shape(&c)
+	_ = Shape(&b)
 }
 
 // ----------
 
 type Point struct {
-	x,  y float64
+	x, y float64
 }
+
+var ORIGIN = NewPoint(0, 0)
 
 func NewPoint(x, y float64) Point {
 	return Point{x: x, y: y}
@@ -48,6 +61,10 @@ func (p *Point) SegmentOf(v Vector) Segment {
 // same structure as point (and stored as a Point in the db), but used in different situations
 type Vector Point
 
+var V_ZERO = NewVector(0, 0)
+var V_BASIS_X = NewVector(1, 0)
+var V_BASIS_Y = NewVector(0, 1)
+
 func NewVector(x, y float64) Vector {
 	return Vector{x: x, y: y}
 }
@@ -58,11 +75,27 @@ func (v *Vector) Magnitude() float64 {
 
 func (v *Vector) Unit() Vector {
 	m := v.Magnitude()
-	return Vector{x: v.x/m, y: v.y/m}
+	return Vector{x: v.x / m, y: v.y / m}
 }
 
 func (v *Vector) Scale(n float64) Vector {
-	return NewVector(v.x*n, v.y*n)
+	return Vector{v.x * n, v.y * n}
+}
+
+func (v *Vector) Angle() float64 {
+	return math.Atan2(v.y, v.x)
+}
+
+func (v *Vector) Plus(vs ...Vector) Vector {
+	dx := v.x
+	dy := v.y
+
+	for _, v2 := range vs {
+		dx += v2.x
+		dy += v2.y
+	}
+
+	return Vector{x: dx, y: dy}
 }
 
 // ----------
@@ -81,13 +114,17 @@ func (c *Circle) Contains(p Point) bool {
 }
 
 func (c *Circle) Area() float64 {
-	return math.Pi*c.radius*c.radius
+	return math.Pi * c.radius * c.radius
 }
 
-func (c *Circle) Boxed() Box {
-	ll := Point{x: c.center.x - c.radius/2, y: c.center.y - c.radius/2}
-	ur := Point{x: c.center.x + c.radius/2, y: c.center.y + c.radius/2}
+func (c *Circle) Box() Box {
+	ll := Point{x: c.center.x - c.radius, y: c.center.y - c.radius}
+	ur := Point{x: c.center.x + c.radius, y: c.center.y + c.radius}
 	return NewBox(ll, ur)
+}
+
+func (c *Circle) Perimeter() float64 {
+	return 2 * math.Pi * c.radius
 }
 
 // ----------
@@ -107,8 +144,12 @@ func (s *Segment) Magnitude() float64 {
 	return s.end[0].DistanceTo(s.end[1])
 }
 
-func (s *Segment) Boxed() Box {
+func (s *Segment) Box() Box {
 	return NewBox(s.end[0], s.end[1])
+}
+
+func (s *Segment) Flip() Segment {
+	return NewSegment(s.end[1], s.end[0])
 }
 
 // ----------
@@ -134,7 +175,14 @@ func (b *Box) Area() float64 {
 	// normalization ensures these are positive
 	dx := b.corner[1].x - b.corner[0].x
 	dy := b.corner[1].y - b.corner[0].y
-	return dx*dy
+	return dx * dy
+}
+
+func (b *Box) Perimeter() float64 {
+	// normalization ensures these are positive
+	dx := b.corner[1].x - b.corner[0].x
+	dy := b.corner[1].y - b.corner[0].y
+	return 2*dx + 2*dy
 }
 
 func (b *Box) Contains(p Point) bool {
@@ -208,7 +256,7 @@ func TimeIntercept(s1, s2 Point, v1, v2 Vector, radius float64) (float64, float6
 
 	// coeffecients
 	a := v2.y*v2.y - 2*v1.y*v2.y + v2.x*v2.x - 2*v1.x*v2.x + v1.y*v1.y + v1.x*v1.x
-	b := (2*s2.y - 2*s1.y)*v2.y + (2*s2.x - 2*s1.x)*v2.x + (2*s1.y - 2*s2.y)*v1.y + (2*s1.x - 2*s2.x)*v1.x
+	b := (2*s2.y-2*s1.y)*v2.y + (2*s2.x-2*s1.x)*v2.x + (2*s1.y-2*s2.y)*v1.y + (2*s1.x-2*s2.x)*v1.x
 	c := s2.y*s2.y - 2*s1.y*s2.y + s2.x*s2.x - 2*s1.x*s2.x + s1.y*s1.y + s1.x*s1.x
 
 	// arrange that so that r^2 is just another part of the constant
@@ -218,7 +266,7 @@ func TimeIntercept(s1, s2 Point, v1, v2 Vector, radius float64) (float64, float6
 	// t = (-b +/- sqrt(b^2 - 4a(c-r^2))) / 2a
 
 	// but break into steps
-	inner := b*b - 4*a*(c - radius*radius)
+	inner := b*b - 4*a*(c-radius*radius)
 
 	// will the discriminant be imaginary?
 	if inner < 0 {
@@ -231,8 +279,8 @@ func TimeIntercept(s1, s2 Point, v1, v2 Vector, radius float64) (float64, float6
 
 	discr := math.Sqrt(inner)
 
-	sol1 := (-b + discr)/(2*a)
-	sol2 := (-b - discr)/(2*a)
+	sol1 := (-b + discr) / (2 * a)
+	sol2 := (-b - discr) / (2 * a)
 
 	return sortPair(sol1, sol2)
 }
@@ -243,25 +291,4 @@ func sortPair(n, m float64) (float64, float64) {
 	}
 
 	return m, n
-}
-
-func checkIntercept(s1, s2 Point, v1, v2 Vector, radius float64) bool {
-
-	// get first intercept time
-	t1, _ := TimeIntercept(s1, s2, v1, v2, radius)
-
-	// calc locations of each point at t1
-	i1 := s1.Translate(v1.Scale(t1))
-	i2 := s2.Translate(v2.Scale(t1))
-
-	// how far apart are they?
-	calcR := i1.DistanceTo(i2)
-
-	// should be equal to radius
-	// but allow for floating point weirdness
-	if math.Abs(calcR - radius) < 0.00001 {
-		return true
-	}
-
-	return false
 }
