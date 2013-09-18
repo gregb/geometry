@@ -4,7 +4,6 @@ package geometry
 
 import (
 	"database/sql/driver"
-	"errors"
 	"fmt"
 )
 
@@ -36,34 +35,16 @@ func expectFloats(src interface{}, expected int) ([]float64, error) {
 	return floats, nil
 }
 
-// ----------
-
-func ToPostgresString(src interface{}) ([]byte, error) {
-
-	switch t := src.(type) {
-	case Point:
-		return []byte(fmt.Sprintf("(%f,%f)", t.x, t.y)), nil
-	case Vector:
-		return []byte(fmt.Sprintf("(%f,%f)", t.x, t.y)), nil
-	case Segment:
-		return []byte(fmt.Sprintf("[(%f,%f),(%f,%f)]", t.end[0].x, t.end[0].y, t.end[1].x, t.end[1].y)), nil
-	case Box:
-		return []byte(fmt.Sprintf("((%f,%f),(%f,%f))", t.corner[0].x, t.corner[0].y, t.corner[1].x, t.corner[1].y)), nil
-	case Circle:
-		return []byte(fmt.Sprintf("<(%f,%f),%f>", t.center.x, t.center.y, t.radius)), nil
-	case Path:
-		return nil, errors.New("Path encoding not yet implemented")
-	case Polygon:
-		return nil, errors.New("Polygon encoding not yet implemented")
-	}
-
-	return nil, fmt.Errorf("This function only encodes types in the geometry package. Not supported: %T", src)
-}
+// assert that types implement driver.Valuer is a pq.Encoder
+var _ driver.Valuer = Point{}
+var _ driver.Valuer = Vector{}
+var _ driver.Valuer = Segment{}
+var _ driver.Valuer = Circle{}
+var _ driver.Valuer = Box{}
 
 // ----------
 
 func (p *Point) Scan(src interface{}) error {
-
 	floats, err := expectFloats(src, 2)
 
 	if err != nil {
@@ -76,15 +57,13 @@ func (p *Point) Scan(src interface{}) error {
 	return nil
 }
 
-func (p *Point) Value() (driver.Value, error) {
-
+func (p Point) Value() (driver.Value, error) {
 	return fmt.Sprintf("(%f,%f)", p.x, p.y), nil
 }
 
 // ----------
 
 func (v *Vector) Scan(src interface{}) error {
-
 	floats, err := expectFloats(src, 2)
 
 	if err != nil {
@@ -97,15 +76,13 @@ func (v *Vector) Scan(src interface{}) error {
 	return nil
 }
 
-func (v *Vector) Value() (driver.Value, error) {
-
+func (v Vector) Value() (driver.Value, error) {
 	return fmt.Sprintf("(%f,%f)", v.x, v.y), nil
 }
 
 // ----------
 
 func (s *Segment) Scan(src interface{}) error {
-
 	floats, err := expectFloats(src, 4)
 
 	if err != nil {
@@ -120,15 +97,13 @@ func (s *Segment) Scan(src interface{}) error {
 	return nil
 }
 
-func (s *Segment) Value() (driver.Value, error) {
-
+func (s Segment) Value() (driver.Value, error) {
 	return fmt.Sprintf("[(%f,%f),(%f,%f)]", s.end[0].x, s.end[0].y, s.end[1].x, s.end[1].y), nil
 }
 
 // ----------
 
 func (b *Box) Scan(src interface{}) error {
-
 	floats, err := expectFloats(src, 4)
 
 	if err != nil {
@@ -143,15 +118,13 @@ func (b *Box) Scan(src interface{}) error {
 	return nil
 }
 
-func (b *Box) Value() (driver.Value, error) {
-
+func (b Box) Value() (driver.Value, error) {
 	return fmt.Sprintf("((%f,%f),(%f,%f))", b.corner[0].x, b.corner[0].y, b.corner[1].x, b.corner[1].y), nil
 }
 
 // ----------
 
 func (c *Circle) Scan(src interface{}) error {
-
 	floats, err := expectFloats(src, 3)
 
 	if err != nil {
@@ -165,7 +138,6 @@ func (c *Circle) Scan(src interface{}) error {
 	return nil
 }
 
-func (c *Circle) Value() (driver.Value, error) {
-
+func (c Circle) Value() (driver.Value, error) {
 	return fmt.Sprintf("<(%f,%f),%f>", c.center.x, c.center.y, c.radius), nil
 }

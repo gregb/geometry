@@ -12,7 +12,7 @@ type Shape interface {
 
 func init() {
 
-	// required that some structs are Shapes
+	// require that some structs are Shapes
 	var c Circle
 	var b Box
 
