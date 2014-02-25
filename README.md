@@ -7,17 +7,17 @@ Allows the following postgres datatypes to be sent and received by enhanced post
 
 The following postgres datatypes are supported:
 
-|----|----|
+| ---- | ----|
 | *Postgres Type* | *Go Type* |
-|----|----|
-|point|geometry.Point|
-|point|geometry.Vector|
-|line||
-|lseg|geometry.Segment|
-|box|geometry.Box|
-|circle|geometry.Circle|
-|path*||
-|polygon*||
+| ---- | ----|
+| point| geometry.Point |
+| point| geometry.Vector |
+| line | |
+| lseg | geometry.Segment |
+| box | geometry.Box |
+| circle | geometry.Circle |
+| path * | |
+| polygon* | |
 
 
 From: http://www.postgresql.org/docs/9.3/static/datatype-geometric.html
