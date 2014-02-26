@@ -89,16 +89,16 @@ func (s *Segment) Scan(src interface{}) error {
 		return fmt.Errorf("Error while parsing data for Segment: %s", err)
 	}
 
-	s.end[0].x = floats[0]
-	s.end[0].y = floats[1]
-	s.end[1].x = floats[2]
-	s.end[1].y = floats[3]
+	s[0].x = floats[0]
+	s[0].y = floats[1]
+	s[1].x = floats[2]
+	s[1].y = floats[3]
 
 	return nil
 }
 
 func (s Segment) Value() (driver.Value, error) {
-	return fmt.Sprintf("[(%f,%f),(%f,%f)]", s.end[0].x, s.end[0].y, s.end[1].x, s.end[1].y), nil
+	return fmt.Sprintf("[(%f,%f),(%f,%f)]", s[0].x, s[0].y, s[1].x, s[1].y), nil
 }
 
 // ----------
@@ -110,16 +110,16 @@ func (b *Box) Scan(src interface{}) error {
 		return fmt.Errorf("Error while parsing data for Box: %s", err)
 	}
 
-	b.corner[0].x = floats[0]
-	b.corner[0].y = floats[1]
-	b.corner[1].x = floats[2]
-	b.corner[1].y = floats[3]
+	b[0].x = floats[0]
+	b[0].y = floats[1]
+	b[1].x = floats[2]
+	b[1].y = floats[3]
 
 	return nil
 }
 
 func (b Box) Value() (driver.Value, error) {
-	return fmt.Sprintf("((%f,%f),(%f,%f))", b.corner[0].x, b.corner[0].y, b.corner[1].x, b.corner[1].y), nil
+	return fmt.Sprintf("((%f,%f),(%f,%f))", b[0].x, b[0].y, b[1].x, b[1].y), nil
 }
 
 // ----------
