@@ -156,7 +156,7 @@ func (b Box) Value() (driver.Value, error) {
 	by = strconv.AppendFloat(by, b[1].y, 'g', -1, 64)
 	by = append(by, ')', ')')
 
-	return b, nil
+	return by, nil
 }
 
 // ----------
