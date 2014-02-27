@@ -232,11 +232,11 @@ func (s Segment) Flip() Segment {
 
 // A Box is a rectangle on the 2D plane.
 // A box's size and location is determined by two diagonally opposite corners.
-// The normal form of a box is for the first corner to be at the lower left
-// (as defined by a standard X/Y plane with values decreasing to the left and
-// down), and the second corner to be the upper right (coordinates with the
-// largest X and Y values).  Using the NewBox function guarantees a
-// normal box.
+// The normal form of a box is for the first corner to be at the upper right
+// (coordinates with the largest X and Y values), and the second corner to be
+// the at the lower left (as defined by a standard X/Y plane with values
+// decreasing to the left and down).  Using the NewBox function guarantees
+// a normal box.
 type Box [2]Point
 
 func NewBox(p1, p2 Point) Box {
@@ -246,8 +246,8 @@ func NewBox(p1, p2 Point) Box {
 	xmin, xmax := sortPair(p1.x, p2.x)
 	ymin, ymax := sortPair(p1.y, p2.y)
 
-	b[0] = Point{x: xmin, y: ymin}
-	b[1] = Point{x: xmax, y: ymax}
+	b[0] = Point{x: xmax, y: ymax}
+	b[1] = Point{x: xmin, y: ymin}
 
 	return *b
 }
@@ -255,16 +255,16 @@ func NewBox(p1, p2 Point) Box {
 // Area calculates the area of the box.
 func (b Box) Area() float64 {
 	// normalization ensures these are positive
-	dx := b[1].x - b[0].x
-	dy := b[1].y - b[0].y
+	dx := b[0].x - b[1].x
+	dy := b[0].y - b[1].y
 	return dx * dy
 }
 
 // Perimeter calculates the perimeter of the box.
 func (b Box) Perimeter() float64 {
 	// normalization ensures these are positive
-	dx := b[1].x - b[0].x
-	dy := b[1].y - b[0].y
+	dx := b[0].x - b[1].x
+	dy := b[0].y - b[1].y
 	return 2*dx + 2*dy
 }
 
@@ -272,19 +272,19 @@ func (b Box) Perimeter() float64 {
 func (b Box) Contains(p Point) bool {
 
 	// normalization ensures no need to check relative positions
-	if p.x > b[1].x {
+	if p.x > b[0].x {
 		return false
 	}
 
-	if p.x < b[0].x {
+	if p.x < b[1].x {
 		return false
 	}
 
-	if p.y > b[1].y {
+	if p.y > b[0].y {
 		return false
 	}
 
-	if p.y < b[0].y {
+	if p.y < b[1].y {
 		return false
 	}
 
@@ -365,9 +365,6 @@ func TimeIntercept(s1, s2 Point, v1, v2 Vector, radius float64) (float64, float6
 		// there are no solutions; p1 and p2 are never within r of each other
 		return math.NaN(), math.NaN()
 	}
-
-	// if inner == 0, there is one solution, but for floating point that is unlikely to be so exact
-	// in any case, returning 2 equal results is still correct
 
 	discr := math.Sqrt(inner)
 
