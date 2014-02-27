@@ -185,6 +185,31 @@ func TestSegmentRoundtrip(t *testing.T) {
 			testRoundtrip(t, 5, "s", s, &r)
 			So(r, ShouldResemble, s)
 		})
+	})
+}
 
+func TestBoxRoundtrip(t *testing.T) {
+	Convey("Given a postgres table with geometric datatypes", t, func() {
+
+		b := NewBox(Point{-1.2, -3.4}, Point{5.6, 7.8})
+
+		Convey("Test that boxes can be written, read, and match", func() {
+			var r Box
+			testRoundtrip(t, 6, "b", b, &r)
+			So(r, ShouldResemble, b)
+		})
+	})
+}
+
+func TestCircleRoundtrip(t *testing.T) {
+	Convey("Given a postgres table with geometric datatypes", t, func() {
+
+		c := NewCircle(Point{-1.2, -3.4}, 123.456)
+
+		Convey("Test that circles can be written, read, and match", func() {
+			var r Circle
+			testRoundtrip(t, 7, "c", c, &r)
+			So(r, ShouldResemble, c)
+		})
 	})
 }
