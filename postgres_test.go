@@ -2,25 +2,44 @@ package geometry
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/gregb/pq"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"time"
 )
 
-func setupRoundtripTest() *sql.DB {
-	db, err := sql.Open("postgres", "postgres://pqgotest:pqgotest@localhost:5432/pqgotest?sslmode=disable")
+var createTable = `
+CREATE TABLE IF NOT EXISTS geotest
+(
+  id integer NOT NULL,
+  t timestamp without time zone NOT NULL,
+  p point,
+  s lseg,
+  b box,
+  c circle,
+  CONSTRAINT geotest_pkey PRIMARY KEY (id, t)
+)`
+
+var testTime = time.Now()
+var db *sql.DB
+
+func init() {
+	var err error
+
+	db, err = sql.Open("postgres", "postgres://pqgotest:pqgotest@localhost:5432/pqgotest?sslmode=disable")
+
+	//pq.TrafficLogging = true
 
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = db.Exec("CREATE TEMP TABLE geotest (id int, p point, s lseg, b box, c circle);")
+	_, err = db.Exec(createTable)
 
 	if err != nil {
 		panic(err)
 	}
-
-	return db
 }
 
 func TestExpectFloats(t *testing.T) {
@@ -98,40 +117,74 @@ func TestExpectFloats(t *testing.T) {
 	})
 }
 
+func testRoundtrip(t *testing.T, testId int, column string, value, returned interface{}) {
+	const insertTemplate = "INSERT INTO geotest (id, t, %s) VALUES ($1, $2, $3)"
+	const selectTemplate = "SELECT %s FROM geotest WHERE id = $1 AND t = $2"
+
+	insertSql := fmt.Sprintf(insertTemplate, column)
+	selectSql := fmt.Sprintf(selectTemplate, column)
+
+	res, err := db.Exec(insertSql, testId, testTime, value)
+	So(err, ShouldBeNil)
+	aff, _ := res.RowsAffected()
+	So(aff, ShouldEqual, 1)
+
+	row := db.QueryRow(selectSql, testId, testTime)
+	err = row.Scan(returned)
+	So(err, ShouldBeNil)
+
+}
+
 func TestPointRoundtrip(t *testing.T) {
 	Convey("Given a postgres table with geometric datatypes", t, func() {
-		db := setupRoundtripTest()
 
 		p1 := NewPoint(0, 0)
 		p2 := NewPoint(-1231, 3242.832)
 
-		Convey("Test that values can be written", func() {
-			r1, e1 := db.Exec("INSERT INTO geotest (id, p) VALUES (1, $1)", p1)
-			So(e1, ShouldBeNil)
-
-			r2, e2 := db.Exec("INSERT INTO geotest (id, p) VALUES (2, $1)", p2)
-			So(e2, ShouldBeNil)
-
-			a1, _ := r1.RowsAffected()
-			a2, _ := r2.RowsAffected()
-
-			So(a1, ShouldEqual, 1)
-			So(a2, ShouldEqual, 1)
-		})
-		Convey("Test that values can be read back, and match written values", func() {
+		Convey("Test that points can be written, read, and match", func() {
 
 			var r1, r2 Point
 
-			row1 := db.QueryRow("SELECT p FROM geotest WHERE id = $1", 1)
-			err := row1.Scan(&r1)
-			So(err, ShouldBeNil)
+			testRoundtrip(t, 1, "p", p1, &r1)
 			So(r1, ShouldResemble, p1)
 
-			row2 := db.QueryRow("SELECT p FROM geotest WHERE id = $1", 2)
-			err = row2.Scan(&r2)
-			So(err, ShouldBeNil)
+			testRoundtrip(t, 2, "p", p2, &r2)
 			So(r2, ShouldResemble, p2)
-
 		})
+	})
+}
+
+func TestVectorRoundtrip(t *testing.T) {
+	Convey("Given a postgres table with geometric datatypes", t, func() {
+
+		// should be able to handle 15 significant digits
+		v1 := NewVector(1234.56789, -9876.54321)
+		v2 := NewVector(123456789012345, 0.123456789012345)
+
+		Convey("Test that vectors can be written, read, and match", func() {
+
+			var r1, r2 Vector
+
+			testRoundtrip(t, 3, "p", v1, &r1)
+			So(r1, ShouldResemble, v1)
+
+			testRoundtrip(t, 4, "p", v2, &r2)
+			So(r2, ShouldResemble, v2)
+		})
+	})
+}
+
+func TestSegmentRoundtrip(t *testing.T) {
+	Convey("Given a postgres table with geometric datatypes", t, func() {
+
+		// should be able to handle 15 significant digits
+		s := NewSegment(Point{1234.56789, -9876.54321}, Point{123456789012345, 0.123456789012345})
+
+		Convey("Test that segments can be written, read, and match", func() {
+			var r Segment
+			testRoundtrip(t, 5, "s", s, &r)
+			So(r, ShouldResemble, s)
+		})
+
 	})
 }

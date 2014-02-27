@@ -5,6 +5,7 @@ package geometry
 import (
 	"database/sql/driver"
 	"fmt"
+	"strconv"
 )
 
 // Checks that the number of floats returned by the sql driver matches expectations.
@@ -58,7 +59,14 @@ func (p *Point) Scan(src interface{}) error {
 }
 
 func (p Point) Value() (driver.Value, error) {
-	return fmt.Sprintf("(%f,%f)", p.x, p.y), nil
+	b := make([]byte, 0, 10)
+	b = append(b, '(')
+	b = strconv.AppendFloat(b, p.x, 'g', -1, 64)
+	b = append(b, ',')
+	b = strconv.AppendFloat(b, p.y, 'g', -1, 64)
+	b = append(b, ')')
+
+	return b, nil
 }
 
 // ----------
@@ -77,7 +85,14 @@ func (v *Vector) Scan(src interface{}) error {
 }
 
 func (v Vector) Value() (driver.Value, error) {
-	return fmt.Sprintf("(%f,%f)", v.x, v.y), nil
+	b := make([]byte, 0, 10)
+	b = append(b, '(')
+	b = strconv.AppendFloat(b, v.x, 'g', -1, 64)
+	b = append(b, ',')
+	b = strconv.AppendFloat(b, v.y, 'g', -1, 64)
+	b = append(b, ')')
+
+	return b, nil
 }
 
 // ----------
@@ -98,7 +113,18 @@ func (s *Segment) Scan(src interface{}) error {
 }
 
 func (s Segment) Value() (driver.Value, error) {
-	return fmt.Sprintf("[(%f,%f),(%f,%f)]", s[0].x, s[0].y, s[1].x, s[1].y), nil
+	b := make([]byte, 0, 10)
+	b = append(b, '[', '(')
+	b = strconv.AppendFloat(b, s[0].x, 'g', -1, 64)
+	b = append(b, ',')
+	b = strconv.AppendFloat(b, s[0].y, 'g', -1, 64)
+	b = append(b, ')', ',', '(')
+	b = strconv.AppendFloat(b, s[1].x, 'g', -1, 64)
+	b = append(b, ',')
+	b = strconv.AppendFloat(b, s[1].y, 'g', -1, 64)
+	b = append(b, ')', ']')
+
+	return b, nil
 }
 
 // ----------
@@ -119,7 +145,18 @@ func (b *Box) Scan(src interface{}) error {
 }
 
 func (b Box) Value() (driver.Value, error) {
-	return fmt.Sprintf("((%f,%f),(%f,%f))", b[0].x, b[0].y, b[1].x, b[1].y), nil
+	by := make([]byte, 0, 10)
+	by = append(by, '(', '(')
+	by = strconv.AppendFloat(by, b[0].x, 'g', -1, 64)
+	by = append(by, ',')
+	by = strconv.AppendFloat(by, b[0].y, 'g', -1, 64)
+	by = append(by, ')', ',', '(')
+	by = strconv.AppendFloat(by, b[1].x, 'g', -1, 64)
+	by = append(by, ',')
+	by = strconv.AppendFloat(by, b[1].y, 'g', -1, 64)
+	by = append(by, ')', ')')
+
+	return b, nil
 }
 
 // ----------
@@ -139,5 +176,14 @@ func (c *Circle) Scan(src interface{}) error {
 }
 
 func (c Circle) Value() (driver.Value, error) {
-	return fmt.Sprintf("<(%f,%f),%f>", c.center.x, c.center.y, c.radius), nil
+	b := make([]byte, 0, 10)
+	b = append(b, '<', '(')
+	b = strconv.AppendFloat(b, c.center.x, 'g', -1, 64)
+	b = append(b, ',')
+	b = strconv.AppendFloat(b, c.center.y, 'g', -1, 64)
+	b = append(b, ')', ',')
+	b = strconv.AppendFloat(b, c.radius, 'g', -1, 64)
+	b = append(b, '>')
+
+	return b, nil
 }
